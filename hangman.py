@@ -1,13 +1,26 @@
 __author__ = "Guilherme Ortiz"
-__version__ = "1.0"
-__date_last_modification__ = "1/10/2018"
+__version__ = "1.1"
+__date_last_modification__ = "10/4/2018"
 __python_version__ = "3"
+
+
+fail_drawing = [
+    [' _ _ _ _ _', '|        |  ', '|        O', '|      - | -', '|       / \\', '|'],
+    [' _ _ _ _ _', '|        |  ', '|        O', '|      - | -', '|       /   ', '|'],
+    [' _ _ _ _ _', '|        |  ', '|        O', '|      - | -', '|           ', '|'],
+    [' _ _ _ _ _', '|        |  ', '|        O', '|      - |  ', '|           ', '|'],
+    [' _ _ _ _ _', '|        |  ', '|        O', '|        |  ', '|           ', '|'],
+    [' _ _ _ _ _', '|        |  ', '|        O', '|           ', '|           ', '|'],
+    [' _ _ _ _ _', '|        |  ', '|         ', '|           ', '|           ', '|'],
+    [' _ _ _ _ _', '|           ', '|         ', '|           ', '|           ', '|']]
+
+
 
 #Program that will grab a random word from the internet and will use it for the hangman game
 from urllib.request import urlopen
 import time
 import re
-
+import random
 
 # Part 1: pull a random word from the web, according to the user specification (min 4 letters - max 10 letters).
 is_eligible_word = False
@@ -25,39 +38,54 @@ while valid_entry is False:
 
 print("\nPlease wait. I'm looking on the web for a word with " + letter_qty + " characters....")
 
-#start an interal basic timer, where the process should automatically abort after more than 30 seconds
-#if a matching word can't be found for any reason (timeout or the website didn't random generate a valid word)
-time.perf_counter()
 
 current_letter_qty = -1
+siteokay = False  #in case the site that provides random words is down, an alternative must be provided automatically
+
+# start an internal basic timer, where the process should automatically abort after more than 30 seconds
+# if a matching word can't be found for any reason (timeout or the website didn't random generate a valid word)
+time.perf_counter()
 
 while is_eligible_word != True:
+
     link = "http://jimpix.co.uk/generators/word-generator.asp"
+
     try:
         f = urlopen(link)
         myfile = str(f.read())
+        siteokay = True
     except:
-        print("ALERT: There was an error while trying to load the site [" + link + "].\nPlease contact the technical support.")
-        exit()
+        print("ALERT: The website [" + link + "] seems to be unavailable.\nIn the meantime, we will use words from our preset pool of words.")
 
-    result = myfile.find("&bull;") #We must find at least one bullet point, because that's where the key words are.
-    if (result == -1):
-        print("ALERT: There was an error while trying to load the site [" + link + "].\nPlease contact the technical support.")
-        exit()
-    tmp = str(myfile[result-12:result]).rstrip().lstrip()
+    if siteokay:
+        result = myfile.find("&bull;")  # We must find at least one bullet point, because that's where the key words are.
+        tmp = str(myfile[result - 12:result]).rstrip().lstrip()
 
-    #print("Checking this string... [" + tmp + "]")
+        #print("Checking this string... [" + tmp + "]")
 
-    if (tmp.find(">") != -1):
-        gt_position = tmp.find(">")
-        random_word = tmp[gt_position+1:].upper()
-        if len(random_word) == int(letter_qty):
-            is_eligible_word = True
+        if (tmp.find(">") != -1):
+            gt_position = tmp.find(">")
+            random_word = tmp[gt_position+1:].upper()
+            if len(random_word) == int(letter_qty):
+                is_eligible_word = True
 
-    if round(time.perf_counter()) > 30:
-        print("\n\nWe tried to find a word with " + letter_qty + " characters but it was taking too long to find one.")
-        print("The program has automatically stopped the execution to prevent further technical issues.")
-        exit()
+        if round(time.perf_counter()) > 30:
+            print("\n\nWe tried to find a word with " + letter_qty + " characters but it was taking too long to find one.")
+            print("The program has automatically stopped the execution to prevent further technical issues.")
+            exit()
+
+    else:
+        backup_word_pool = []
+        file = open("backupwords.txt", "r")
+        for line in file:
+            line = line.strip('\n').upper()
+            if (len(line) == int(letter_qty)):
+                backup_word_pool.append(line)
+        file.close()
+
+        random_word = backup_word_pool[random.randint(1,len(backup_word_pool)-1)]
+        is_eligible_word = True
+
 
 #print("This is the word I found for you: '" + random_word + "'")
 
@@ -83,7 +111,8 @@ class hangman:
 
 #Every time the user enters a word, we should show the game progress at that point.
 def show_game_progress(matches, attempts, game_obj):
-    partial_result = "\n\n\n\n\n"
+    drawman(attempts)
+    partial_result = "| "
     for i in game_obj.getRandomWord():
         if i in game_obj.getEnteredUserLetters():
             partial_result = partial_result + " " + i
@@ -102,6 +131,13 @@ def getMatches(letter, game_obj):
         if i == letter:
             tmp += 1
     return tmp
+
+
+#Draws on screen the hangman (exept for the actual letters already entered)
+def drawman(fail):
+    for i in range(len(fail_drawing[fail])):
+        print(fail_drawing[fail][i])
+
 
 fail_limit = 7 #Maximum number of attempts (with 7 strokes we can draw the man hanging = game over)
 game = hangman(random_word)
@@ -135,5 +171,6 @@ while fail_limit > 0:
             else:
                 print("\nAttention: You have already tried this letter!")
 
+drawman(0)
 print("\n\n\n--->> I'm sorry, but you failed <<---\n\nThe word was '" + random_word + "'")
 exit()
