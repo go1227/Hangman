@@ -1,5 +1,5 @@
 __author__ = "Guilherme Ortiz"
-__version__ = "1.1"
+__version__ = "1.2"
 __date_last_modification__ = "10/4/2018"
 __python_version__ = "3"
 
@@ -101,6 +101,8 @@ class hangman:
         self.__guess_word = guess_word
         self.__user_choices = set()
         self.__new_letter = ""
+    def __repr__(self):
+        return "{} ({!r})".format({self.__class__}, {self.__guess_word})
     def getEnteredUserLetters(self):
         return sorted(self.__user_choices)
     def getRandomWord(self):
@@ -150,7 +152,7 @@ while fail_limit > 0:
 
     if (matches == len(random_word)):
         print("\n\n\n\n\n\n\n\n************ CONGRATULATIONS!! ****************")
-        print("\nYou guessed the word '" + random_word + "' in " + str(fail_limit+8) + " attempts.\n\n\n\n")
+        print("\nYou guessed the word '" + random_word + "'. Congratulations!\n\n\n\n")
         exit()
     else:
         if fail_limit < 7:
