@@ -21,11 +21,13 @@ import random
 import requests
 from bs4 import BeautifulSoup
 
+
 # Load all backup works in a simple list
 file_path = 'backupwords.txt'
 if not (os.path.isfile(file_path) and os.access(file_path, os.R_OK)):
     print("Missing file OR not readable - ABORT")
     exit()
+
 
 # Part 1: random word should be min 4 letters - max 10 letters.
 random_word = ""
@@ -50,9 +52,9 @@ while len(random_word) == 0:
         response = requests.get(url)
         soup = BeautifulSoup(response.text, 'html.parser')
         tmp = soup.find('div', id='random_word')
-        tmp = tmp.get_text().upper()
-        if int(word_length) == len(tmp):
-            random_word = tmp
+        tmp = tmp.get_text()
+        if int(word_length) == len(tmp) and tmp.isascii():
+            random_word = tmp.upper()
     except:
         # ANY sort of exception should trigger the txt file use
         # Web option didn't work: use backupwords.txt instead.
@@ -61,7 +63,7 @@ while len(random_word) == 0:
         for line in file:
             if len(line) == int(word_length):
                 backup_word_pool.append(line.upper().strip('\n'))
-        print(backup_word_pool)
+        # print(backup_word_pool)
         random_word = random.choice(backup_word_pool)
 
 # Remove the comment below when debugging the program. It helps to know upfront which word you are trying to guess
