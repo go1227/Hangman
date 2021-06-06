@@ -1,6 +1,6 @@
 __author__ = "Guilherme Ortiz"
-__version__ = "1.3"
-__date_last_modification__ = "6/4/2021"
+__version__ = "1.4"
+__date_last_modification__ = "6/6/2021"
 __python_version__ = "3"
 
 fail_drawing = [
@@ -18,7 +18,10 @@ fail_drawing = [
 import os
 import re
 import random
+import requests
+from bs4 import BeautifulSoup
 
+# Load all backup works in a simple list
 file_path = 'backupwords.txt'
 if not (os.path.isfile(file_path) and os.access(file_path, os.R_OK)):
     print("Missing file OR not readable - ABORT")
@@ -27,27 +30,41 @@ if not (os.path.isfile(file_path) and os.access(file_path, os.R_OK)):
 # Part 1: random word should be min 4 letters - max 10 letters.
 random_word = ""
 
-letter_qty = -1
+word_length = -1
 valid_entry = False
 while valid_entry is False:
-    letter_qty = input("How many letters are in your word? [min 4, max 10]:\n")
-    if letter_qty.isdigit():
-        if 4 <= int(letter_qty) <= 10:
+    word_length = input("How many letters are in your word? [min 4, max 10]:\n")
+    if word_length.isdigit():
+        if 4 <= int(word_length) <= 10:
             valid_entry = True
     else:
         print("This is an invalid number!!\n")
 
-backup_word_pool = []
-file = open("backupwords.txt", "r")
-for line in file:
-    line = line.strip('\n').upper()
-    if len(line) == int(letter_qty):
-        backup_word_pool.append(line)
-file.close()
+# Try getting words from web - if it fails, use the "backupwords.txt" file instead.
 
-random_word = backup_word_pool[random.randint(1, len(backup_word_pool) - 1)]
+print("\nPlease wait...")
+while len(random_word) == 0:
+    try:
+        # read website
+        url = 'http://www.randomword.com/'
+        response = requests.get(url)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        tmp = soup.find('div', id='random_word')
+        tmp = tmp.get_text().upper()
+        if int(word_length) == len(tmp):
+            random_word = tmp
+    except:
+        # ANY sort of exception should trigger the txt file use
+        # Web option didn't work: use backupwords.txt instead.
+        backup_word_pool = []
+        file = open("backupwords.txt", "r")
+        for line in file:
+            if len(line) == int(word_length):
+                backup_word_pool.append(line.upper().strip('\n'))
+        print(backup_word_pool)
+        random_word = random.choice(backup_word_pool)
 
-
+# Remove the comment below when debugging the program. It helps to know upfront which word you are trying to guess
 # print("This is the word I found for you: '" + random_word + "'")
 
 
